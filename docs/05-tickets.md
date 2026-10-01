@@ -2,7 +2,7 @@
 
 Reads: `01-prd.md`, `02-architecture.md`, `03-security.md`, `04-frontend.md`, and `06-deployment.md` for environment names.
 
-**How to use this file with an AI coding tool:** give it **one ticket per prompt**, in order. Say: "Read CLAUDE.md and the docs it points to. Build ticket NN only. Do not start other tickets." After each ticket: run the checks in `CLAUDE.md`, commit with the ticket number, then move on.
+**Engineering Execution:** Tickets are organized in sequential phases. Work ticket by ticket in dependency order. Every ticket includes strict acceptance criteria, test coverage requirements, and security review points.
 
 Every ticket's **Done when** includes: tests pass, lint and type checks pass, and the security points listed for that ticket are met.
 

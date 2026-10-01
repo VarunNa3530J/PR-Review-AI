@@ -1,0 +1,95 @@
+@import "tailwindcss";
+
+:root {
+  /* Apple HIG Pro Dark Palette: Clean neutral tones, authentic translucency */
+  --bg-app: #090A0F;
+  --bg-panel: rgba(18, 20, 29, 0.75);
+  --bg-card: rgba(23, 26, 38, 0.6);
+  --bg-card-hover: rgba(28, 32, 48, 0.75);
+  --bg-input: rgba(14, 16, 24, 0.85);
+
+  /* Delicate, ultra-fine Apple HIG borders (1px with high precision alpha) */
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-light: rgba(255, 255, 255, 0.12);
+  --border-focus: rgba(255, 255, 255, 0.28);
+
+  /* Text hierarchy */
+  --text-primary: #F5F5F7;
+  --text-secondary: #86868B;
+  --text-muted: #636366;
+
+  /* Accent & Apple Cream Tab */
+  --accent-primary: #FFFFFF;
+  --accent-active-tab: #F5F5F7;
+  --accent-active-text: #090A0F;
+
+  /* Tag colors matching authentic HIG semantic colors */
+  --bug-red: #FF453A;
+  --bug-red-bg: rgba(255, 69, 58, 0.12);
+  --sec-amber: #FF9F0A;
+  --sec-amber-bg: rgba(255, 159, 10, 0.12);
+  --improve-blue: #0A84FF;
+  --improve-blue-bg: rgba(10, 132, 255, 0.12);
+  --test-green: #30D158;
+  --test-green-bg: rgba(48, 209, 88, 0.12);
+
+  /* Diff colors */
+  --diff-del-bg: rgba(255, 69, 58, 0.12);
+  --diff-del-text: #FF6961;
+  --diff-add-bg: rgba(48, 209, 88, 0.12);
+  --diff-add-text: #34C759;
+}
+
+body {
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", -apple-system, sans-serif;
+  letter-spacing: -0.012em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Apple Native Glass Effect */
+.apple-glass {
+  background: rgba(18, 20, 28, 0.65);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.apple-card {
+  background: rgba(23, 26, 38, 0.55);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.apple-card:hover {
+  background: rgba(28, 32, 46, 0.7);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* Apple Spring Scale interaction */
+.apple-press {
+  transition: transform 0.14s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.15s ease, background-color 0.2s ease;
+}
+.apple-press:active {
+  transform: scale(0.97);
+}

@@ -47,10 +47,6 @@ coverage/
 *.env
 !**/.env.example
 
-# Temporary and external vendor skills
-apple-design-skill-main/
-apple-design-skill-main/**
-
 # OS / Editor
 .DS_Store
 Thumbs.db

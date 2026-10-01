@@ -178,7 +178,6 @@ Prices for hosting are **intentionally not listed**; none were verified. The dep
 
 ```
 pr-review-ai/
-├── CLAUDE.md
 ├── README.md
 ├── LICENSE
 ├── docs/                     # the six spec files

@@ -82,7 +82,8 @@ def scan_for_secrets(content: str, file_path: str = "") -> list[SecretFinding]:
                         line_number=line_idx,
                         masked_value=masked,
                         advice=(
-                            f"Revoke this {name} immediately and remove it from git history."
+                            f"Revoke this {name} immediately and remove it from "
+                            "git history."
                         ),
                     )
                 )

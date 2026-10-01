@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import {
   Bell,
-  Shield,
   Trash2,
   Check,
   Save,

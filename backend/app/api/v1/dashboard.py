@@ -1,11 +1,15 @@
 """Dashboard API routes for repositories, overview stats, quality, and reviews."""
 
 from typing import Any
+
+import structlog
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
 from app.api.deps import CurrentAccount, get_current_account, require_owner
 from app.core.config import settings
+
+logger = structlog.get_logger()
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 repos_router = APIRouter(prefix="/repos", tags=["Repositories"])
@@ -57,17 +61,26 @@ async def get_dashboard_overview(
     """Returns top-level stat cards and activity for current account."""
     completed_reviews = [r for r in ACTIVE_REVIEWS if r.get("status") == "completed"]
     total_reviews = len(completed_reviews)
-    
+
     total_critical = sum(
-        1 for r in completed_reviews for f in r.get("findings", []) if f.get("severity") == "critical"
+        1
+        for r in completed_reviews
+        for f in r.get("findings", [])
+        if f.get("severity") == "critical"
     )
     total_high = sum(
-        1 for r in completed_reviews for f in r.get("findings", []) if f.get("severity") == "high"
+        1
+        for r in completed_reviews
+        for f in r.get("findings", [])
+        if f.get("severity") == "high"
     )
-    
+
     avg_sec = 0
     if total_reviews > 0:
-        avg_sec = int(sum(r.get("duration_ms", 0) for r in completed_reviews) / (total_reviews * 1000))
+        avg_sec = int(
+            sum(r.get("duration_ms", 0) for r in completed_reviews)
+            / (total_reviews * 1000)
+        )
 
     return DashboardOverviewResponse(
         reviews_this_month=total_reviews,
@@ -99,7 +112,9 @@ async def toggle_repo_enabled(
         if repo["id"] == repo_id:
             repo["is_enabled"] = enabled
             return {"repo_id": repo_id, "is_enabled": enabled, "status": "updated"}
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Repository not found.")
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND, detail="Repository not found."
+    )
 
 
 @router.get("/repos/{repo_id}/quality", response_model=RepoQualityResponse)
@@ -110,10 +125,17 @@ async def get_repo_quality_trends(
     """Returns quality score and breakdown for repository."""
     # Find repository or aggregate overall
     repo = next((r for r in ACTIVE_REPOSITORIES if r["id"] == repo_id), None)
-    
+
     if repo_id == "default" or not repo:
         repo_reviews = ACTIVE_REVIEWS
-        score = int(sum(r.get("quality_score", 100) for r in ACTIVE_REVIEWS) / max(1, len(ACTIVE_REVIEWS))) if ACTIVE_REVIEWS else 100
+        score = (
+            int(
+                sum(r.get("quality_score", 100) for r in ACTIVE_REVIEWS)
+                / max(1, len(ACTIVE_REVIEWS))
+            )
+            if ACTIVE_REVIEWS
+            else 100
+        )
     else:
         repo_reviews = [r for r in ACTIVE_REVIEWS if r.get("repo_id") == repo_id]
         score = repo.get("quality_score", 100)
@@ -199,6 +221,7 @@ async def review_multiple_files(
 ) -> dict[str, Any]:
     """Scans and reviews a collection of files from a folder or single file upload."""
     import uuid
+
     from app.services.review.pipeline import ReviewPipeline
 
     if not req.files:
@@ -218,7 +241,9 @@ async def review_multiple_files(
     ]
 
     # Ensure repository/folder entity exists
-    repo_item = next((r for r in ACTIVE_REPOSITORIES if r["full_name"] == req.repo_name), None)
+    repo_item = next(
+        (r for r in ACTIVE_REPOSITORIES if r["full_name"] == req.repo_name), None
+    )
     if not repo_item:
         repo_item = {
             "id": f"repo-{uuid.uuid4().hex[:8]}",
@@ -230,7 +255,7 @@ async def review_multiple_files(
         }
         ACTIVE_REPOSITORIES.append(repo_item)
 
-    pipeline = ReviewPipeline(installation_token="local_dev_token")
+    pipeline = ReviewPipeline(installation_token="local_dev_token")  # noqa: S106
     result = await pipeline.run(
         owner="local",
         repo=req.repo_name,
@@ -241,13 +266,25 @@ async def review_multiple_files(
 
     # Calculate accurate health score based on findings
     raw_findings_objs = result.get("findings", [])
-    findings = [
-        f.__dict__ if hasattr(f, "__dict__") else f
-        for f in raw_findings_objs
-    ]
-    crit_count = sum(1 for f in findings if (f.get("severity") if isinstance(f, dict) else getattr(f, "severity", "")) == "critical")
-    high_count = sum(1 for f in findings if (f.get("severity") if isinstance(f, dict) else getattr(f, "severity", "")) == "high")
-    med_count = sum(1 for f in findings if (f.get("severity") if isinstance(f, dict) else getattr(f, "severity", "")) == "medium")
+    findings = [f.__dict__ if hasattr(f, "__dict__") else f for f in raw_findings_objs]
+    crit_count = sum(
+        1
+        for f in findings
+        if (f.get("severity") if isinstance(f, dict) else getattr(f, "severity", ""))
+        == "critical"
+    )
+    high_count = sum(
+        1
+        for f in findings
+        if (f.get("severity") if isinstance(f, dict) else getattr(f, "severity", ""))
+        == "high"
+    )
+    med_count = sum(
+        1
+        for f in findings
+        if (f.get("severity") if isinstance(f, dict) else getattr(f, "severity", ""))
+        == "medium"
+    )
     score_penalty = (crit_count * 25) + (high_count * 15) + (med_count * 5)
     quality_score = max(5, 100 - score_penalty)
 
@@ -321,12 +358,18 @@ async def update_dashboard_settings(
         # Persist to .env file in root
         try:
             import os
-            root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+
+            root_dir = os.path.dirname(
+                os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+            )
             backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-            for target_env in [os.path.join(root_dir, ".env"), os.path.join(backend_dir, ".env")]:
+            for target_env in [
+                os.path.join(root_dir, ".env"),
+                os.path.join(backend_dir, ".env"),
+            ]:
                 lines = []
                 if os.path.exists(target_env):
-                    with open(target_env, "r", encoding="utf-8") as f:
+                    with open(target_env, encoding="utf-8") as f:
                         lines = f.readlines()
                 found = False
                 new_lines = []
@@ -340,21 +383,25 @@ async def update_dashboard_settings(
                     new_lines.append(f"GEMINI_API_KEY={clean_key}\n")
                 with open(target_env, "w", encoding="utf-8") as f:
                     f.writelines(new_lines)
-        except Exception:
-            pass
+        except OSError as err:
+            logger.warning("failed_to_persist_gemini_key_to_env", error=str(err))
 
     if req.gemini_model:
         settings.LLM_REVIEW_MODEL = req.gemini_model
 
     masked_key = ""
     if settings.GEMINI_API_KEY and settings.GEMINI_API_KEY != "dummy_key":
-        masked_key = f"{settings.GEMINI_API_KEY[:6]}...{settings.GEMINI_API_KEY[-4:]}" if len(settings.GEMINI_API_KEY) > 10 else "***"
+        masked_key = (
+            f"{settings.GEMINI_API_KEY[:6]}...{settings.GEMINI_API_KEY[-4:]}"
+            if len(settings.GEMINI_API_KEY) > 10
+            else "***"
+        )
 
     return {
         "success": True,
-        "has_gemini_key": bool(settings.GEMINI_API_KEY and settings.GEMINI_API_KEY != "dummy_key"),
+        "has_gemini_key": bool(
+            settings.GEMINI_API_KEY and settings.GEMINI_API_KEY != "dummy_key"
+        ),
         "gemini_api_key_masked": masked_key,
         "gemini_model": settings.LLM_REVIEW_MODEL,
     }
-
-

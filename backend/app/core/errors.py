@@ -67,8 +67,9 @@ async def app_error_handler(_request: Request, exc: AppError) -> JSONResponse:
 async def unhandled_exception_handler(
     _request: Request, exc: Exception
 ) -> JSONResponse:
-    """Mask unexpected internal errors from clients for security but print traceback in dev."""
+    """Mask unexpected internal errors from clients for security."""
     import traceback
+
     print("UNHANDLED EXCEPTION IN BACKEND:", exc)
     traceback.print_exc()
     return JSONResponse(

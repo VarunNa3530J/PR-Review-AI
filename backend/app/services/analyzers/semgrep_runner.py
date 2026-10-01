@@ -1,8 +1,8 @@
 """Static analysis rules runner executing inside secure sandbox temp directories."""
 
-from dataclasses import dataclass
 import re
-from typing import Pattern
+from dataclasses import dataclass
+from re import Pattern
 
 # Custom static security checks for injection, unsafe deserialization, weak crypto, etc.
 STATIC_SECURITY_RULES: list[dict[str, str | Pattern[str]]] = [
@@ -63,7 +63,8 @@ STATIC_SECURITY_RULES: list[dict[str, str | Pattern[str]]] = [
         "severity": "critical",
         "category": "security",
         "explanation": (
-            "Hardcoding credentials or API tokens in source code leaks sensitive production keys. "
+            "Hardcoding credentials or API tokens in source code leaks "
+            "sensitive production keys. "
             "Store in environment variables or a secret vault."
         ),
     },
@@ -76,7 +77,8 @@ STATIC_SECURITY_RULES: list[dict[str, str | Pattern[str]]] = [
         "severity": "high",
         "category": "security",
         "explanation": (
-            "Directly inserting unescaped HTML into the DOM leads to Cross-Site Scripting (XSS). "
+            "Directly inserting unescaped HTML into the DOM leads to "
+            "Cross-Site Scripting (XSS). "
             "Use sanitized inputs or framework-native text interpolation."
         ),
     },
@@ -89,7 +91,8 @@ STATIC_SECURITY_RULES: list[dict[str, str | Pattern[str]]] = [
         "severity": "medium",
         "category": "security",
         "explanation": (
-            "Permissive wildcard CORS '*' allows arbitrary origins to request authenticated data. "
+            "Permissive wildcard CORS '*' allows arbitrary origins to request "
+            "authenticated data. "
             "Explicitly whitelist authorized hostnames."
         ),
     },
@@ -102,7 +105,8 @@ STATIC_SECURITY_RULES: list[dict[str, str | Pattern[str]]] = [
         "severity": "medium",
         "category": "security",
         "explanation": (
-            "Logging credentials or auth tokens to client/server console exposes sensitive data in logs."
+            "Logging credentials or auth tokens to client/server console "
+            "exposes sensitive data in logs."
         ),
     },
     {
@@ -114,7 +118,8 @@ STATIC_SECURITY_RULES: list[dict[str, str | Pattern[str]]] = [
         "severity": "high",
         "category": "security",
         "explanation": (
-            "Using plain HTTP or disabling TLS verification exposes API communications to man-in-the-middle interception."
+            "Using plain HTTP or disabling TLS verification exposes API "
+            "communications to man-in-the-middle interception."
         ),
     },
     {
@@ -126,7 +131,8 @@ STATIC_SECURITY_RULES: list[dict[str, str | Pattern[str]]] = [
         "severity": "medium",
         "category": "security",
         "explanation": (
-            "Catastrophic backtracking regular expression pattern causes Regular Expression Denial of Service (ReDoS)."
+            "Catastrophic backtracking regular expression pattern causes "
+            "Regular Expression Denial of Service (ReDoS)."
         ),
     },
 ]

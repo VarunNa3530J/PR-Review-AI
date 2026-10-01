@@ -5,7 +5,6 @@ import Link from "next/link";
 import { AppShell } from "@/components/layout/AppShell";
 import {
   FolderGit2,
-  ExternalLink,
   Search,
   Plus,
   RefreshCw,

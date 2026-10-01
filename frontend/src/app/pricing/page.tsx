@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Sparkles, Check, ArrowRight } from "lucide-react";
+import { Sparkles, Check } from "lucide-react";
 
 export default function PricingPage() {
   const plans = [

@@ -175,9 +175,17 @@ def detect_language(file_path: str, content: str | None = None) -> str:
         sample = content[:1000]
         if sample.startswith("#!/bin/bash") or sample.startswith("#!/bin/sh"):
             return "shell"
-        if sample.startswith("#!/usr/bin/env python") or "def " in sample and "import " in sample:
+        if (
+            sample.startswith("#!/usr/bin/env python")
+            or "def " in sample
+            and "import " in sample
+        ):
             return "python"
-        if sample.startswith("#!/usr/bin/env node") or "const " in sample and "=>" in sample:
+        if (
+            sample.startswith("#!/usr/bin/env node")
+            or "const " in sample
+            and "=>" in sample
+        ):
             return "javascript"
 
     return "text"

@@ -90,7 +90,7 @@ def merge_and_rank_findings(
 
 
 def calculate_overall_risk(findings: list[UnifiedFinding]) -> str:
-    """Derives PR risk badge: High if Critical/High found, Medium if Medium, else Low."""
+    """Derives PR risk badge: High if Critical/High, Medium if Medium, else Low."""
     has_critical_or_high = any(f.severity in ("critical", "high") for f in findings)
     if has_critical_or_high:
         return "high"

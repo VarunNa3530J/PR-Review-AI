@@ -12,9 +12,11 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.auth import router as auth_router
 from app.api.v1.dashboard import (
-    router as dashboard_router,
     repos_router,
     reviews_router,
+)
+from app.api.v1.dashboard import (
+    router as dashboard_router,
 )
 from app.api.v1.webhooks import router as webhooks_router
 from app.core.config import settings

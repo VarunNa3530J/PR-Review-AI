@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Sparkles, ArrowRight, CheckCircle2, Lock, ShieldCheck, Zap } from "lucide-react";
+import { Sparkles, ArrowRight, CheckCircle2, Lock, Zap } from "lucide-react";
 
 export default function Home() {
   return (

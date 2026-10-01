@@ -63,7 +63,8 @@ def analyze_code_quality(file_path: str, content: str) -> list[QualityFinding]:
                     title="Deeply Nested Code Block",
                     explanation=(
                         f"Nesting level ({indent_level}) exceeds recommended maximum "
-                        f"of {MAX_NESTING_LEVEL}. Consider early return or extracting helpers."
+                        f"of {MAX_NESTING_LEVEL}. Consider early return or "
+                        "extracting helpers."
                     ),
                 )
             )

@@ -63,8 +63,7 @@ class GeminiLLMClient(BaseLLMClient):
 
     async def review_diff(self, prompt: str, system_instruction: str) -> LLMResponse:
         """Calls Gemini API with strict structured output schema."""
-        # Cost estimate calculation helper:
-        # ($0.75 per 1M in = 750000 micro-dollars, $3.75 per 1M out = 3750000 micro-dollars)
+        # Cost estimate calculation helper ($0.75 in / $3.75 out per 1M tokens)
         tokens_in = len(prompt.split()) * 2
         tokens_out = 300
         cost_micro_usd = int(
@@ -79,7 +78,11 @@ class GeminiLLMClient(BaseLLMClient):
 
             client = genai.Client(api_key=settings.GEMINI_API_KEY)
             models_to_try = [self.model_name]
-            fallback_models = ["gemini-3.5-flash", "gemini-3.1-flash-lite", "gemini-3.8-flash"]
+            fallback_models = [
+                "gemini-3.5-flash",
+                "gemini-3.1-flash-lite",
+                "gemini-3.8-flash",
+            ]
             for m in fallback_models:
                 if m not in models_to_try:
                     models_to_try.append(m)
@@ -106,7 +109,9 @@ class GeminiLLMClient(BaseLLMClient):
                         cost_usd_estimate=cost_micro_usd,
                     )
                 except Exception as exc:
-                    logger.warning("gemini_call_model_retry", model=try_model, error=str(exc))
+                    logger.warning(
+                        "gemini_call_model_retry", model=try_model, error=str(exc)
+                    )
                     continue
 
         # Safe fallback response when API key is unset or mocked

@@ -3,30 +3,20 @@
 import React, { useState, useEffect, useRef } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import {
-  Sparkles,
-  CheckCircle2,
-  AlertTriangle,
-  AlertOctagon,
   ChevronDown,
   ChevronRight,
-  Send,
   RefreshCw,
   Play,
   Code,
-  Shield,
   Check,
   Folder,
   FileCode,
   Upload,
   History,
-  FileText,
   Copy,
   FolderOpen,
   Save,
-  Terminal,
   FileCheck,
-  Bot,
-  User,
   PanelLeftClose,
   PanelLeftOpen,
   PanelRightClose,
@@ -36,13 +26,9 @@ import {
   FolderPlus,
   FilePlus,
   Search,
-  Undo2,
   ThumbsUp,
   ThumbsDown,
   Mic,
-  Maximize2,
-  Columns,
-  GitCommit,
   X,
   Zap,
   Code2,
@@ -302,8 +288,16 @@ export default function DashboardReviewPage() {
   const [selectedReview, setSelectedReview] = useState<ReviewDetail | null>(null);
   const [selectedFileForInspection, setSelectedFileForInspection] = useState<ReviewFileItem | null>(null);
   const [selectedFileToScan, setSelectedFileToScan] = useState<string>("all");
-  const [activeTab, setActiveTab] = useState<"findings" | "files" | "history">("findings");
-  const [severityFilter, setSeverityFilter] = useState<"all" | "critical" | "high" | "medium" | "low">("all");
+  const [activeTab, setActiveTab] = useState<"findings" | "files" | "history">(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get("tab");
+      if (tab === "history" || tab === "files" || tab === "findings") {
+        return tab as "findings" | "files" | "history";
+      }
+    }
+    return "findings";
+  });
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisStage, setAnalysisStage] = useState("");
@@ -365,53 +359,46 @@ export default function DashboardReviewPage() {
     },
   ]);
 
-  // Sync editor when active file changes
-  useEffect(() => {
-    if (selectedFileForInspection) {
-      setEditedCode(selectedFileForInspection.content);
-      setIsModified(false);
-    } else {
-      setEditedCode("");
-      setIsModified(false);
-    }
-  }, [selectedFileForInspection]);
-
-  // URL query parameter for tab navigation
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const tab = params.get("tab");
-      if (tab === "history" || tab === "files" || tab === "findings") {
-        setActiveTab(tab);
-      }
-    }
-  }, []);
-
-  async function fetchOverview() {
-    try {
-      const res = await fetch("http://localhost:8000/api/v1/dashboard/overview", {
-        credentials: "include",
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.recent_reviews && data.recent_reviews.length > 0) {
-          setReviews(data.recent_reviews);
-          setSelectedReview(data.recent_reviews[0]);
-          if (data.recent_reviews[0].files && data.recent_reviews[0].files.length > 0) {
-            setSelectedFileForInspection(data.recent_reviews[0].files[0]);
-            setFolderFiles(data.recent_reviews[0].files);
-          }
-        }
-      }
-    } catch {
-      // Handled silently
-    } finally {
-      setLoading(false);
-    }
+  // Sync editor when active file changes without effect cascading renders
+  const [prevSelectedFilePath, setPrevSelectedFilePath] = useState<string | null>(null);
+  const currentSelectedFilePath = selectedFileForInspection?.path ?? null;
+  if (currentSelectedFilePath !== prevSelectedFilePath) {
+    setPrevSelectedFilePath(currentSelectedFilePath);
+    setEditedCode(selectedFileForInspection ? selectedFileForInspection.content : "");
+    setIsModified(false);
   }
 
   useEffect(() => {
-    fetchOverview();
+    let isSubscribed = true;
+    async function fetchOverview() {
+      try {
+        const res = await fetch("http://localhost:8000/api/v1/dashboard/overview", {
+          credentials: "include",
+        });
+        if (!isSubscribed) return;
+        if (res.ok) {
+          const data = await res.json();
+          if (data.recent_reviews && data.recent_reviews.length > 0) {
+            setReviews(data.recent_reviews);
+            setSelectedReview(data.recent_reviews[0]);
+            if (data.recent_reviews[0].files && data.recent_reviews[0].files.length > 0) {
+              setSelectedFileForInspection(data.recent_reviews[0].files[0]);
+              setFolderFiles(data.recent_reviews[0].files);
+            }
+          }
+        }
+      } catch {
+        // Handled silently
+      } finally {
+        if (isSubscribed) {
+          setLoading(false);
+        }
+      }
+    }
+    void fetchOverview();
+    return () => {
+      isSubscribed = false;
+    };
   }, []);
 
   const IGNORED_PATH_SEGMENTS = [
@@ -627,9 +614,12 @@ export default function DashboardReviewPage() {
     setFolderFiles(updated);
     setSelectedFileForInspection({ ...selectedFileForInspection, content: editedCode });
     if (selectedReview?.files) {
-      selectedReview.files = selectedReview.files.map((f) =>
-        f.path === selectedFileForInspection.path ? { ...f, content: editedCode } : f
-      );
+      setSelectedReview({
+        ...selectedReview,
+        files: selectedReview.files.map((f) =>
+          f.path === selectedFileForInspection.path ? { ...f, content: editedCode } : f
+        ),
+      });
     }
     setIsModified(false);
     setSaveToast(true);
@@ -651,7 +641,10 @@ export default function DashboardReviewPage() {
     const updated = [...folderFiles, newFileItem];
     setFolderFiles(updated);
     if (selectedReview?.files) {
-      selectedReview.files = [...selectedReview.files, newFileItem];
+      setSelectedReview({
+        ...selectedReview,
+        files: [...selectedReview.files, newFileItem],
+      });
     }
     setSelectedFileForInspection(newFileItem);
     setSelectedFileToScan(cleanPath);
@@ -749,7 +742,10 @@ export default function DashboardReviewPage() {
     const updated = [...folderFiles, newFolderItem];
     setFolderFiles(updated);
     if (selectedReview?.files) {
-      selectedReview.files = [...selectedReview.files, newFolderItem];
+      setSelectedReview({
+        ...selectedReview,
+        files: [...selectedReview.files, newFolderItem],
+      });
     }
     setExpandedFolders((prev) => ({ ...prev, [cleanFolder]: true }));
     setSelectedFileForInspection(newFolderItem);
@@ -808,12 +804,6 @@ export default function DashboardReviewPage() {
     }
   }
 
-  // Switch to inline diff mode automatically whenever defects are present or when active file is selected
-  useEffect(() => {
-    if (activeFileFindings.length > 0) {
-      setEditorViewMode("diff");
-    }
-  }, [activeFileFindings.length, selectedFileForInspection?.path]);
 
   const handleApplySingleFix = (lineNum: number, replacementLine: string) => {
     const lines = editedCode.split("\n");
@@ -866,7 +856,6 @@ export default function DashboardReviewPage() {
   const criticalFindings = selectedReview?.findings.filter((f) => f.severity === "critical") || [];
   const highFindings = selectedReview?.findings.filter((f) => f.severity === "high") || [];
   const mediumFindings = selectedReview?.findings.filter((f) => f.severity === "medium") || [];
-  const lowFindings = selectedReview?.findings.filter((f) => f.severity === "low" || f.severity === "info") || [];
 
   const healthScore =
     selectedReview?.quality_score ??
@@ -1293,9 +1282,13 @@ export default function DashboardReviewPage() {
                   <button
                     onClick={() => copyToClipboard(editedCode, "editor-code")}
                     className="p-1 rounded hover:bg-white/[0.06] hover:text-white transition-colors"
-                    title="Copy code"
+                    title={copiedId === "editor-code" ? "Copied!" : "Copy code"}
                   >
-                    <Copy className="w-3.5 h-3.5" />
+                    {copiedId === "editor-code" ? (
+                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    ) : (
+                      <Copy className="w-3.5 h-3.5" />
+                    )}
                   </button>
                   <button className="p-1 rounded hover:bg-white/[0.06] hover:text-white transition-colors">
                     <ThumbsUp className="w-3.5 h-3.5" />

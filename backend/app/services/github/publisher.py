@@ -33,7 +33,7 @@ class GitHubPublisher:
         skipped_count: int,
         missing_tests: list[str],
     ) -> str:
-        """Constructs safe markdown summary comment without triggering mentions or raw HTML."""
+        """Constructs safe markdown summary comment without mentions or raw HTML."""
         crit_count = sum(1 for f in findings if f.severity == "critical")
         high_count = sum(1 for f in findings if f.severity == "high")
         med_count = sum(1 for f in findings if f.severity == "medium")
@@ -60,9 +60,7 @@ class GitHubPublisher:
         ]
 
         if skipped_count > 0:
-            lines.append(
-                f"\n*Note: {skipped_count} file(s) were skipped (lockfiles/size/limits).*"
-            )
+            lines.append(f"\n*Note: {skipped_count} file(s) were skipped (limits).*")
 
         if missing_tests:
             lines.append("\n#### Suggested Test Cases")
@@ -72,7 +70,7 @@ class GitHubPublisher:
                 lines.append(f"- [ ] {safe_t}")
 
         lines.append(
-            "\n---\n*Need clarification? Reply directly to any comment or mention `@pr-review-ai`.*"
+            "\n---\n*Need clarification? Reply to comments or `@pr-review-ai`.*"
         )
         return "\n".join(lines)
 
@@ -90,7 +88,10 @@ class GitHubPublisher:
 
         comments_payload: list[dict[str, Any]] = []
         for finding in findings[:MAX_INLINE_COMMENTS]:
-            body = f"**[{finding.severity.upper()}] {finding.title}**\n\n{finding.explanation}"
+            body = (
+                f"**[{finding.severity.upper()}] {finding.title}**\n\n"
+                f"{finding.explanation}"
+            )
             if finding.suggested_patch:
                 body += f"\n\n```suggestion\n{finding.suggested_patch.strip()}\n```"
 

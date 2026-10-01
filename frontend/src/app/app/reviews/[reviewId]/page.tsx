@@ -6,15 +6,11 @@ import { AppShell } from "@/components/layout/AppShell";
 import {
   ArrowLeft,
   ExternalLink,
-  ShieldAlert,
-  CheckCircle2,
   ThumbsUp,
   ThumbsDown,
   EyeOff,
-  GitCommit,
   Clock,
   FileText,
-  RefreshCw,
 } from "lucide-react";
 
 interface Finding {
@@ -29,6 +25,22 @@ interface Finding {
   source: string;
 }
 
+interface ReviewDetail {
+  id?: string;
+  pr_number?: number;
+  repo?: string;
+  title?: string;
+  risk_level?: string;
+  summary?: string;
+  created_at?: string;
+  findings?: Finding[];
+  files_count?: number;
+  commit_sha?: string;
+  duration_ms?: number;
+  files_reviewed?: number;
+  files?: unknown[];
+}
+
 interface ReviewDetailPageProps {
   params: Promise<{ reviewId: string }>;
 }
@@ -37,7 +49,7 @@ export default function ReviewDetailPage({ params }: ReviewDetailPageProps) {
   const resolvedParams = use(params);
   const reviewId = resolvedParams.reviewId;
 
-  const [review, setReview] = useState<any>(null);
+  const [review, setReview] = useState<ReviewDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -60,6 +72,16 @@ export default function ReviewDetailPage({ params }: ReviewDetailPageProps) {
   }, [reviewId]);
 
   const findings: Finding[] = review?.findings || [];
+
+  if (loading) {
+    return (
+      <AppShell>
+        <div className="flex items-center justify-center min-h-[50vh] text-sm text-[var(--text-muted)] animate-pulse">
+          Loading review audit...
+        </div>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell>

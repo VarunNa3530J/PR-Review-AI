@@ -26,7 +26,8 @@ async def get_current_account(
     Guarantees cross-tenant boundary isolation.
     """
     if not session_token:
-        # In local dev environment, provide fallback current account so frontend preview works seamlessly
+        # In local dev environment, provide fallback current account
+        # so frontend preview works seamlessly
         from app.core.config import settings
 
         if settings.APP_ENV == "local":

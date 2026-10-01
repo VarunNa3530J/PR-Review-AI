@@ -32,11 +32,11 @@ class ReviewPipeline:
         files_data: list[dict[str, Any]],
         rules_yaml: str | None = None,
     ) -> dict[str, Any]:
-        """Runs complete review pipeline: filter -> static -> secrets -> AI -> validate -> rank -> publish."""
+        """Runs complete review pipeline: filter -> static -> AI -> rank -> publish."""
         start_time = time.perf_counter()
         config = parse_repo_rules_yaml(rules_yaml)
 
-        # 1. Filter changed files (supporting large directory sources up to 100,000 lines)
+        # 1. Filter changed files (supporting large directory sources)
         filtered = filter_pr_files(
             files_data,
             ignore_patterns=config.ignore_paths,
@@ -61,7 +61,11 @@ class ReviewPipeline:
                         "source": "static",
                         "title": sf.rule_name,
                         "explanation": f"{sf.advice} Value: {sf.masked_value}",
-                        "suggested_patch": "// Load secret safely from environment variable or Vault:\nconst secretKey = process.env.SECRET_KEY || process.env.API_KEY;",
+                        "suggested_patch": (
+                            "// Load secret safely from env or Vault:\n"
+                            "const secretKey = process.env.SECRET_KEY || "
+                            "process.env.API_KEY;"
+                        ),
                     }
                 )
 
@@ -70,25 +74,53 @@ class ReviewPipeline:
             for sh in static_hits:
                 patch = None
                 if "SQL Injection" in sh.title:
-                    patch = "// Parameterized query:\nawait db.query(\"SELECT * FROM items WHERE id = $1\", [itemId]);"
+                    patch = (
+                        "// Parameterized query:\n"
+                        'await db.query("SELECT * FROM items WHERE id = $1", [itemId]);'
+                    )
                 elif "Command Injection" in sh.title:
-                    patch = "// Safe subprocess invocation without shell=True:\nsubprocess.run([\"command\", arg], shell=False, check=True)"
+                    patch = (
+                        "// Safe subprocess invocation without shell=True:\n"
+                        'subprocess.run(["command", arg], shell=False, check=True)'
+                    )
                 elif "Deserialization" in sh.title:
-                    patch = "# Safe yaml or json parser:\ndata = yaml.safe_load(raw_data)"
+                    patch = (
+                        "# Safe yaml or json parser:\ndata = yaml.safe_load(raw_data)"
+                    )
                 elif "Cryptographic" in sh.title:
-                    patch = "// Strong cryptographic digest:\nhash = crypto.createHash(\"sha256\").update(data).digest(\"hex\");"
+                    patch = (
+                        "// Strong cryptographic digest:\n"
+                        'hash = crypto.createHash("sha256").update(data)'
+                        '.digest("hex");'
+                    )
                 elif "Hardcoded" in sh.title:
                     patch = "const apiKey = process.env.APP_SECRET_TOKEN;"
                 elif "Cross-Site Scripting" in sh.title:
-                    patch = "// Safe textContent or sanitized HTML:\nelement.textContent = userProvidedText;"
+                    patch = (
+                        "// Safe textContent or sanitized HTML:\n"
+                        "element.textContent = userProvidedText;"
+                    )
                 elif "CORS" in sh.title:
-                    patch = "// Whitelist trusted origins:\nres.setHeader(\"Access-Control-Allow-Origin\", \"https://app.yourdomain.com\");"
+                    patch = (
+                        "// Whitelist trusted origins:\n"
+                        'res.setHeader("Access-Control-Allow-Origin", '
+                        '"https://app.yourdomain.com");'
+                    )
                 elif "Console Logging" in sh.title:
-                    patch = "// Remove logging of credentials:\nlogger.info(\"User authentication requested\");"
+                    patch = (
+                        "// Remove logging of credentials:\n"
+                        'logger.info("User authentication requested");'
+                    )
                 elif "Insecure HTTP" in sh.title:
-                    patch = "// Use HTTPS:\nconst API_URL = \"https://api.yourdomain.com/v1\";"
+                    patch = (
+                        "// Use HTTPS:\n"
+                        'const API_URL = "https://api.yourdomain.com/v1";'
+                    )
                 elif "ReDoS" in sh.title:
-                    patch = "// Simplified linear regex avoiding catastrophic backtracking:\nconst safeRegex = /^[a-zA-Z0-9_-]{1,64}$/;"
+                    patch = (
+                        "// Simplified linear regex without backtracking:\n"
+                        "const safeRegex = /^[a-zA-Z0-9_-]{1,64}$/;"
+                    )
                 raw_findings.append(
                     {
                         "file_path": f.path,
@@ -116,11 +148,14 @@ class ReviewPipeline:
                         "source": "static",
                         "title": qh.title,
                         "explanation": qh.explanation,
-                        "suggested_patch": "// Refactor function into decomposed helper modules to reduce cyclomatic complexity.",
+                        "suggested_patch": (
+                            "// Refactor function into decomposed helper modules "
+                            "to reduce cyclomatic complexity."
+                        ),
                     }
                 )
 
-            # Real Python AST & Syntax Error Analysis (Detects dot typos, SyntaxErrors, incomplete expressions)
+            # Real Python AST & Syntax Error Analysis (Detects SyntaxErrors)
             syntax_hits = analyze_syntax_errors(f.path, f.patch)
             for syn in syntax_hits:
                 raw_findings.append(

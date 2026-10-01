@@ -2,7 +2,9 @@
 
 import asyncio
 import uuid
+
 from sqlalchemy import select
+
 from app.db.models import Plan
 from app.db.session import async_session_maker
 

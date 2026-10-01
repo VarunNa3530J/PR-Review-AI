@@ -2,14 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
-import {
-  TrendingUp,
-  ShieldCheck,
-  AlertTriangle,
-  Bug,
-  FileCode,
-  CheckCircle2,
-} from "lucide-react";
+import { TrendingUp, Bug, FileCode } from "lucide-react";
 
 export default function QualityTrendsPage() {
   const [qualityScore, setQualityScore] = useState<number>(100);

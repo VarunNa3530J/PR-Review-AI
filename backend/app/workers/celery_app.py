@@ -68,4 +68,4 @@ def review_pull_request_task(
             repo=repo_full_name,
             pr_number=pr_number,
         )
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc

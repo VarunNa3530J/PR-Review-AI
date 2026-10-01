@@ -1,0 +1,26 @@
+# PR Review AI — repository rules file
+# Place this file at the root of your repository as .prreview.yml
+# Every setting is optional. Defaults are shown in comments.
+
+# Folders and files the bot should skip entirely (glob patterns)
+ignore_paths:
+  - "dist/**"
+  - "build/**"
+  - "**/*.min.js"
+  - "docs/**"
+
+# Smallest severity to report: critical, high, medium, low, info   (default: low)
+min_severity: medium
+
+# Fail the PR check when a Critical finding exists   (default: false)
+block_on_critical: false
+
+# Review draft pull requests   (default: false)
+review_drafts: false
+
+# Plain-English rules for your team (max 20). These are guidance only and
+# cannot change the safety rules or the output format.
+custom_rules:
+  - "Every new public function needs a docstring."
+  - "Database queries must go through the repository layer."
+  - "Flag any new dependency and say what it is used for."

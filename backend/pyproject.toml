@@ -1,0 +1,79 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pr-review-ai-backend"
+version = "0.1.0"
+description = "AI code review bot for GitHub pull requests - Backend API and Worker"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.136.0",
+    "uvicorn[standard]>=0.34.0",
+    "pydantic>=2.10.0",
+    "pydantic-settings>=2.8.0",
+    "sqlalchemy>=2.0.36",
+    "alembic>=1.14.0",
+    "psycopg[binary]>=3.2.0",
+    "celery[redis]>=5.4.0",
+    "google-genai>=1.0.0",
+    "pyjwt[crypto]>=2.10.0",
+    "cryptography>=44.0.0",
+    "httpx>=0.28.0",
+    "tenacity>=9.0.0",
+    "structlog>=24.4.0",
+    "tree-sitter>=0.23.0",
+    "tree-sitter-language-pack>=0.2.0",
+    "bandit>=1.8.0",
+    "razorpay>=1.4.0",
+    "pyyaml>=6.0.2",
+    "python-multipart>=0.0.20",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "ruff>=0.8.0",
+    "mypy>=1.13.0",
+    "types-pyyaml>=6.0.12",
+]
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S"]
+ignore = [
+    "S101", # allow assert in tests
+    "B008", # allow Depends in FastAPI parameter defaults
+    "S105", # allow test dummy secrets and schema names
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+ignore_missing_imports = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+pythonpath = ["."]
+asyncio_mode = "auto"
+
+[tool.bandit]
+exclude_dirs = ["tests", "migrations"]
+tests = ["B201", "B301"]
+skips = ["B101"]

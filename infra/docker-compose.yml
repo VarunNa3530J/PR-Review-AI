@@ -1,0 +1,106 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: prreview-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: prreview
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d prreview"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: prreview-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: prreview-api
+    restart: unless-stopped
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    environment:
+      - APP_ENV=local
+      - API_BASE_URL=http://localhost:8000
+      - WEB_BASE_URL=http://localhost:3000
+      - DATABASE_URL=postgresql+psycopg://postgres:postgrespassword@postgres:5432/prreview
+      - REDIS_URL=redis://redis:6379/0
+      - SESSION_SIGNING_KEY=local_dev_session_signing_key_32_characters_minimum
+      - FIELD_ENCRYPTION_KEY=local_dev_field_encryption_key_32_chars_min!
+      - GITHUB_APP_ID=123456
+      - GITHUB_APP_SLUG=pr-review-ai-dev
+      - GITHUB_APP_PRIVATE_KEY=""
+      - GITHUB_WEBHOOK_SECRET=dev_webhook_secret_key_123456
+      - GITHUB_OAUTH_CLIENT_ID=dummy_id
+      - GITHUB_OAUTH_CLIENT_SECRET=dummy_secret
+      - GEMINI_API_KEY=dummy_key
+      - GEMINI_KEY_TIER=free
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  worker:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: prreview-worker
+    restart: unless-stopped
+    command: celery -A app.workers.celery_app.celery_app worker --loglevel=info
+    environment:
+      - APP_ENV=local
+      - DATABASE_URL=postgresql+psycopg://postgres:postgrespassword@postgres:5432/prreview
+      - REDIS_URL=redis://redis:6379/0
+      - SESSION_SIGNING_KEY=local_dev_session_signing_key_32_characters_minimum
+      - FIELD_ENCRYPTION_KEY=local_dev_field_encryption_key_32_chars_min!
+      - GEMINI_API_KEY=dummy_key
+      - GEMINI_KEY_TIER=free
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: prreview-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
+  redisdata:

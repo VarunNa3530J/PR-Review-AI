@@ -55,7 +55,7 @@ export default function ReviewDetailPage({ params }: ReviewDetailPageProps) {
   useEffect(() => {
     async function loadReview() {
       try {
-        const res = await fetch(`http://localhost:8000/api/v1/dashboard/reviews/${reviewId}`, {
+        const res = await fetch(`http://localhost:8000/api/v1/reviews/${reviewId}`, {
           credentials: "include",
         });
         if (res.ok) {

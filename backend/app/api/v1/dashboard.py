@@ -173,6 +173,14 @@ async def get_repo_quality_trends(
     )
 
 
+@reviews_router.get("")
+async def list_reviews(
+    current: CurrentAccount = Depends(get_current_account),
+) -> list[dict[str, Any]]:
+    """Returns list of recent reviews."""
+    return ACTIVE_REVIEWS
+
+
 @reviews_router.get("/{review_id}")
 async def get_review_detail(
     review_id: str,

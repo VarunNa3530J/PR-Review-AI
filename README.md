@@ -68,48 +68,84 @@ Code reviews consume substantial engineering hours, yet critical syntax bugs, ed
 
 ---
 
-## 🏗️ System Architecture
+## 🏗️ System Architecture & Workflow
 
+### 🔄 End-to-End Architecture Flow
+
+```mermaid
+flowchart TD
+    %% Styling Definitions
+    classDef client fill:#FAFAFA,stroke:#26D67C,stroke-width:2px,color:#1A1A1A,rx:10,ry:10;
+    classDef gateway fill:#FFFFFF,stroke:#26D67C,stroke-width:2px,color:#1A1A1A,rx:10,ry:10;
+    classDef queue fill:#F5F5F5,stroke:#6B6B6B,stroke-width:2px,color:#1A1A1A,stroke-dasharray: 4 4,rx:8,ry:8;
+    classDef worker fill:#FFFFFF,stroke:#26D67C,stroke-width:3px,color:#1A1A1A,rx:12,ry:12;
+    classDef engine fill:#FAFAFA,stroke:#26D67C,stroke-width:1.5px,color:#1A1A1A,rx:6,ry:6;
+    classDef storage fill:#FAFAFA,stroke:#6B6B6B,stroke-width:2px,color:#1A1A1A,rx:8,ry:8;
+    classDef output fill:#26D67C,stroke:#1A1A1A,stroke-width:1.5px,color:#FFFFFF,rx:10,ry:10;
+
+    %% Nodes
+    GH["🐙 GitHub PR / Webhook Event"]:::client
+    API["⚡ FastAPI Webhook Gateway<br/><code>HMAC-SHA256 • Idempotency • 5MB Cap</code>"]:::gateway
+    REDIS[("📬 Redis Message Broker<br/><code>Celery Queue</code>")]:::queue
+
+    subgraph WORKER_CLUSTER ["🛠️ Distributed Celery Worker Cluster"]
+        W["🔄 Review Pipeline Orchestrator"]:::worker
+        S1["🔍 File Filter & Cap Enforcer<br/><i>Ignore lockfiles, binaries, & limits</i>"]:::engine
+        S2["🛡️ Secret & Security Scanner<br/><i>Pre-merge regex & token mask</i>"]:::engine
+        S3["🌲 100% Real Python AST Parser<br/><i>Syntax validation & auto-fix</i>"]:::engine
+        S4["🤖 Google Gemini Flash LLM<br/><i>Strict JSON schema & diff bounds</i>"]:::engine
+        S5["📊 Severity Ranking & Deduplicator<br/><i>Fingerprint hashing & risk scoring</i>"]:::engine
+
+        W --> S1 --> S2 --> S3 --> S4 --> S5
+    end
+
+    PG[("💾 PostgreSQL 16 DB<br/><code>Reviews • Metrics • Findings</code>")]:::storage
+    OUT_GH["💬 GitHub Check Runs & Inline Diff Comments"]:::output
+    STUDIO["💻 Next.js 16 Review Studio Dashboard"]:::output
+
+    %% Connections
+    GH -->|"1. Webhook POST"| API
+    API -->|"2. Enqueue Job"| REDIS
+    REDIS -->|"3. Consume Task"| W
+    S5 -->|"4. Post Review & Checks"| OUT_GH
+    S5 -->|"5. Store Results"| PG
+    PG -->|"6. Query Analytics & History"| STUDIO
+
+    linkStyle default stroke:#26D67C,stroke-width:2px;
 ```
-                          GitHub Webhook / PR Event
-                                     │
-                                     ▼
-                     ┌───────────────────────────────┐
-                     │   FastAPI Webhook Handler     │
-                     │  - HMAC-SHA256 Verification   │
-                     │  - Delivery Idempotency Check │
-                     │  - 5 MB Payload Size Cap      │
-                     └───────────────┬───────────────┘
-                                     │ Enqueue task
-                                     ▼
-                           ┌───────────────────┐
-                           │    Redis Broker   │
-                           └─────────┬─────────┘
-                                     │
-                                     ▼
-                     ┌───────────────────────────────┐
-                     │     Celery Worker Cluster     │
-                     │                               │
-                     │  1. File Filter & Quota Check │
-                     │  2. Static Security & Secrets │
-                     │  3. Python AST Syntax Check   │
-                     │  4. Gemini AI Review Pass     │
-                     │  5. Diff Line Range Validation│
-                     │  6. Severity Ranking & Dedupe │
-                     └───────┬───────────────┬───────┘
-                             │               │
-                 Publish     │               │ Persist
-                             ▼               ▼
-                   ┌────────────────┐  ┌───────────────┐
-                   │ GitHub API     │  │  PostgreSQL   │
-                   │ - Check Runs   │  │  Database     │
-                   │ - Inline Diff  │  └───────┬───────┘
-                   │ - PR Summary   │          │ Read stats & reviews
-                   └────────────────┘          ▼
-                                       ┌───────────────┐
-                                       │ Next.js 16    │
-                                       │ Review Studio │
-                                       └───────────────┘
+
+### ⚡ Detailed Review Execution Sequence
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Dev as 👨‍💻 Developer
+    participant GH as 🐙 GitHub
+    participant API as ⚡ FastAPI Gateway
+    participant Redis as 📬 Redis
+    participant Celery as ⚙️ Celery Worker
+    participant AST as 🌲 AST & Static Analyzers
+    participant Gemini as 🤖 Google Gemini Flash
+    participant DB as 💾 PostgreSQL
+    participant Studio as 💻 Next.js Studio
+
+    Dev->>GH: Open / Synchronize Pull Request
+    GH->>API: POST /api/v1/webhooks/github (HMAC Signature)
+    Note over API: Verify constant-time HMAC-SHA256 & Delivery ID
+    API->>Redis: Enqueue review task
+    API-->>GH: HTTP 202 Accepted (Instant response)
+
+    Redis->>Celery: Dispatch background review task
+    Celery->>AST: 1. Filter files, scan secrets & parse Python AST
+    alt Syntax error or secret found
+        AST-->>Celery: Real syntax error with candidate patch
+    end
+    Celery->>Gemini: 2. Request structured AI review (JSON Schema)
+    Gemini-->>Celery: Structured findings & risk breakdown
+    Note over Celery: 3. Verify finding lines fall strictly inside diff
+    Celery->>GH: 4. Post unified inline review comments & check runs
+    Celery->>DB: 5. Persist review metadata & findings
+    Studio->>DB: 6. Real-time fetch for interactive side-by-side inspection
 ```
 
 ---

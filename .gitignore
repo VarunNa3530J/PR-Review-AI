@@ -59,3 +59,7 @@ Thumbs.db
 tmp/
 scratch/
 temp/
+
+# Generated Assistant / Framework files
+AGENTS.md
+CLAUDE.md

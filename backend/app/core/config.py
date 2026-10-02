@@ -41,8 +41,8 @@ class Settings(BaseSettings):
     # AI
     GEMINI_API_KEY: str = ""
     GEMINI_KEY_TIER: Literal["free", "paid"] = "free"
-    LLM_REVIEW_MODEL: str = "gemini-3.8-flash"
-    LLM_LIGHT_MODEL: str = "gemini-3.5-flash-lite"
+    LLM_REVIEW_MODEL: str = "gemini-2.5-flash"
+    LLM_LIGHT_MODEL: str = "gemini-2.0-flash"
     LLM_PRICE_REVIEW_IN_PER_M: int = 750000  # micro-dollars per 1M tokens ($0.75)
     LLM_PRICE_REVIEW_OUT_PER_M: int = 3750000  # micro-dollars ($3.75)
     LLM_PRICE_LIGHT_IN_PER_M: int = 300000  # micro-dollars ($0.30)

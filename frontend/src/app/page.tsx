@@ -27,7 +27,7 @@ export default function Home() {
       <main className="max-w-4xl mx-auto px-6 py-20 text-center flex-1 flex flex-col items-center justify-center">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.06] border border-white/[0.08] text-[#86868B] text-xs font-mono mb-8">
           <Zap className="w-3 h-3 text-white" />
-          Powered by Gemini 3.8 Flash & Apple Design
+          Powered by Gemini 2.5 Flash
         </div>
 
         <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-white max-w-2xl leading-tight mb-5">
@@ -35,7 +35,7 @@ export default function Home() {
         </h1>
 
         <p className="text-sm sm:text-base text-[#86868B] max-w-xl mb-10 leading-relaxed">
-          Open a pull request. In under 60 seconds, PR Review AI scans secrets, runs static security checks, and posts verified 1-click fixes directly on affected lines.
+          Open a pull request. PR Review AI scans secrets, runs static security checks, and posts verified 1-click fixes directly on affected lines.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center gap-3 mb-16">
@@ -62,9 +62,9 @@ export default function Home() {
             <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center mb-3">
               <CheckCircle2 className="w-4 h-4" />
             </div>
-            <h3 className="font-semibold text-sm text-white mb-1.5">Zero Hallucinations</h3>
+            <h3 className="font-semibold text-sm text-white mb-1.5">AST-Verified Diff Bounds</h3>
             <p className="text-xs text-[#86868B] leading-relaxed">
-              Every AI finding is mapped against real git diff lines. Stale or hallucinated lines are purged before posting.
+              Findings are validated against modified diff lines and checked with Python AST parsing to catch syntax errors before posting.
             </p>
           </div>
 

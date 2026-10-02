@@ -183,11 +183,10 @@ export default function SettingsPage() {
                 onChange={(e) => setGeminiModel(e.target.value)}
                 className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-white/[0.08] bg-[#0E1117] text-white focus:outline-none focus:border-emerald-500/50 cursor-pointer font-medium"
               >
-                <option value="gemini-3.8-flash">Gemini 3.8 Flash (Latest Preview & Fast, Recommended)</option>
-                <option value="gemini-3.5-flash">Gemini 3.5 Flash (Ultra-Fast & Smart)</option>
-                <option value="gemini-2.5-flash">Gemini 2.5 Flash (High Speed Production)</option>
+                <option value="gemini-2.5-flash">Gemini 2.5 Flash (Recommended Default)</option>
+                <option value="gemini-2.0-flash">Gemini 2.0 Flash (Fast & Cost Efficient)</option>
                 <option value="gemini-1.5-pro">Gemini 1.5 Pro (Deep Multi-File Reasoning)</option>
-                <option value="gemini-1.5-flash">Gemini 1.5 Flash (Standard Lightweight)</option>
+                <option value="gemini-1.5-flash">Gemini 1.5 Flash (Lightweight)</option>
               </select>
             </div>
           </div>

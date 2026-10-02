@@ -47,7 +47,7 @@ export default function PricingPage() {
         "Slack webhook alerts (AES-256-GCM encrypted)",
         "Organization role-based access control",
         "90-day retention policies",
-        "Priority Gemini 3.8 Flash quota allocation",
+        "Priority Gemini Flash quota allocation",
       ],
       isPopular: false,
       ctaText: "Upgrade to Team",

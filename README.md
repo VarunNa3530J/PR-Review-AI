@@ -44,7 +44,7 @@ Code reviews consume substantial engineering hours, yet critical syntax bugs, ed
 **PR Review AI** provides an end-to-end, multi-stage automated review pipeline:
 1. **Event Ingestion**: Ingests GitHub webhook events (`pull_request.opened`, `synchronize`, `reopened`) with constant-time HMAC-SHA256 signature verification and delivery idempotency.
 2. **Multi-Stage Static Analysis**: Scans patches for high-entropy secrets, known security vulnerabilities (SQLi, command injection, path traversal, ReDoS), and code quality smells without invoking LLMs.
-3. **Real AST Syntax Validation**: Validates Python Abstract Syntax Trees (`ast.parse`) and syntax constructs to catch errors (trailing dots, incomplete expressions, unbalanced syntax) with zero hallucination.
+3. **Real AST Syntax Validation**: Validates Python Abstract Syntax Trees (`ast.parse`) and syntax constructs to catch syntax errors (trailing dots, incomplete expressions, unbalanced syntax) with AST validation.
 4. **Context-Aware AI Review**: Dispatches filtered code diffs to Google Gemini Flash (`gemini-2.5-flash`, `gemini-2.0-flash`) using strict JSON schemas and diff boundary checks.
 5. **Inline Publishing & Web Studio**: Posts structured review summaries and line-by-line comments directly to GitHub PRs and streams interactive diffs to a Next.js 16 Review Studio dashboard.
 
@@ -52,7 +52,7 @@ Code reviews consume substantial engineering hours, yet critical syntax bugs, ed
 
 ## ✨ Key Features
 
-- **🛡️ 100% Real AST Syntax Verification**: Real Python `ast.parse` checks syntax integrity before and after suggested patches, eliminating AI hallucination and verifying fixes.
+- **🛡️ 100% Real AST Syntax Verification**: Real Python `ast.parse` checks syntax integrity before and after suggested patches, eliminating invalid syntax and verifying diff bounds.
 - **🎨 Interactive Review Studio**: Next.js 16 dashboard with red-highlighted error lines, green corrected lines, side-by-side file inspection, and one-click code copying.
 - **📁 VS Code-Style File Explorer**:
   - Full tree view with automatic file detection across 30+ languages (Python, TypeScript, JavaScript, SQL, Rust, Go, Java, Dockerfile, YAML, etc.).
@@ -228,21 +228,27 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
 
 ---
 
-## 🚀 Installation & Local Setup
+## 🚀 Installation & Setup
 
-### Option A: Docker Compose (Full Stack, Recommended)
+### Option A: Docker Compose (Full Stack)
 
-The repository provides a complete multi-container setup in [`infra/docker-compose.yml`](infra/docker-compose.yml) running PostgreSQL 16, Redis 7, FastAPI API, Celery Worker, and Next.js Web:
+The repository provides a complete multi-container setup running PostgreSQL 16, Redis 7, FastAPI API, Celery Worker, and Next.js Web.
+
+#### 1. Local Development (with Safe Defaults)
+For local testing and offline review studio evaluation, you can use the default compose file or configure a local `.env`:
 
 ```bash
 # 1. Clone repository
 git clone https://github.com/VarunNa3530J/PR-Review-AI.git
 cd PR-Review-AI
 
-# 2. Build and launch all services in detached mode
+# 2. (Optional) Copy environment template for local overrides
+cp infra/.env.example infra/.env
+
+# 3. Build and launch all services in detached mode
 docker compose -f infra/docker-compose.yml up --build -d
 
-# 3. Verify container health
+# 4. Verify container health
 docker compose -f infra/docker-compose.yml ps
 ```
 
@@ -254,6 +260,19 @@ To stop containers:
 ```bash
 docker compose -f infra/docker-compose.yml down
 ```
+
+#### 2. Production Deployment (Strict Secret Enforcement)
+In production environments, never rely on default credentials. The production compose configuration (`infra/docker-compose.prod.yml`) enforces that all production secrets (`POSTGRES_PASSWORD`, `DATABASE_URL`, `SESSION_SIGNING_KEY`, `FIELD_ENCRYPTION_KEY`, `GITHUB_APP_PRIVATE_KEY`, `GITHUB_WEBHOOK_SECRET`, `GEMINI_API_KEY`) are explicitly defined:
+
+```bash
+# 1. Create a secure environment configuration from the template
+cp infra/.env.example infra/.env
+# Edit infra/.env with production keys, high-entropy secrets, and paid Gemini tier
+
+# 2. Launch production stack with strict validation
+docker compose --env-file infra/.env -f infra/docker-compose.yml -f infra/docker-compose.prod.yml up --build -d
+```
+*(If any required secret is missing or empty, Docker Compose will fail immediately with `${VARIABLE:?Set VARIABLE in environment}`)*
 
 ---
 

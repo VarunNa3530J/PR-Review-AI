@@ -1,0 +1,48 @@
+# ==============================================================================
+# Production Docker Compose Override for PR-Review-AI
+# ==============================================================================
+# Enforces that all required production secrets and configurations are strictly
+# provided via environment variables (or .env file) without unsafe fallbacks.
+#
+# Usage:
+#   docker compose -f infra/docker-compose.yml -f infra/docker-compose.prod.yml up --build -d
+# ==============================================================================
+
+services:
+  postgres:
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in environment}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in environment}
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB in environment}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+
+  api:
+    environment:
+      - APP_ENV=production
+      - API_BASE_URL=${API_BASE_URL:?Set API_BASE_URL in environment}
+      - WEB_BASE_URL=${WEB_BASE_URL:?Set WEB_BASE_URL in environment}
+      - DATABASE_URL=${DATABASE_URL:?Set DATABASE_URL in environment}
+      - REDIS_URL=${REDIS_URL:?Set REDIS_URL in environment}
+      - SESSION_SIGNING_KEY=${SESSION_SIGNING_KEY:?Set SESSION_SIGNING_KEY in environment}
+      - FIELD_ENCRYPTION_KEY=${FIELD_ENCRYPTION_KEY:?Set FIELD_ENCRYPTION_KEY in environment}
+      - GITHUB_APP_ID=${GITHUB_APP_ID:?Set GITHUB_APP_ID in environment}
+      - GITHUB_APP_SLUG=${GITHUB_APP_SLUG:?Set GITHUB_APP_SLUG in environment}
+      - GITHUB_APP_PRIVATE_KEY=${GITHUB_APP_PRIVATE_KEY:?Set GITHUB_APP_PRIVATE_KEY in environment}
+      - GITHUB_WEBHOOK_SECRET=${GITHUB_WEBHOOK_SECRET:?Set GITHUB_WEBHOOK_SECRET in environment}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:?Set GEMINI_API_KEY in environment}
+      - GEMINI_KEY_TIER=paid
+
+  worker:
+    environment:
+      - APP_ENV=production
+      - DATABASE_URL=${DATABASE_URL:?Set DATABASE_URL in environment}
+      - REDIS_URL=${REDIS_URL:?Set REDIS_URL in environment}
+      - SESSION_SIGNING_KEY=${SESSION_SIGNING_KEY:?Set SESSION_SIGNING_KEY in environment}
+      - FIELD_ENCRYPTION_KEY=${FIELD_ENCRYPTION_KEY:?Set FIELD_ENCRYPTION_KEY in environment}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:?Set GEMINI_API_KEY in environment}
+      - GEMINI_KEY_TIER=paid
+
+  web:
+    environment:
+      - NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL:?Set NEXT_PUBLIC_API_BASE_URL in environment}

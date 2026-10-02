@@ -232,10 +232,14 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
 
 ### Option A: Docker Compose (Full Stack)
 
-The repository provides a complete multi-container setup running PostgreSQL 16, Redis 7, FastAPI API, Celery Worker, and Next.js Web.
+The repository provides a modular, containerized multi-service architecture running PostgreSQL 16, Redis 7, FastAPI API, Celery Worker, and Next.js 16 Web.
 
-#### 1. Local Development (with Safe Defaults)
-For local testing and offline review studio evaluation, you can use the default compose file or configure a local `.env`:
+> [!IMPORTANT]
+> **Production Network Isolation**: By default, PostgreSQL (`5432`) and Redis (`6379`) do **not** publish ports to the public host network in base or production compose files. All database and cache communication is strictly restricted to Docker's internal container network.
+
+#### 1. Local Development Setup
+
+For local testing, the base compose file provides safe local development defaults:
 
 ```bash
 # 1. Clone repository
@@ -248,31 +252,81 @@ cp infra/.env.example infra/.env
 # 3. Build and launch all services in detached mode
 docker compose -f infra/docker-compose.yml up --build -d
 
-# 4. Verify container health
+# 4. Check service health and running containers
 docker compose -f infra/docker-compose.yml ps
+docker compose -f infra/docker-compose.yml logs -f api
 ```
 
 - **Frontend Dashboard**: `http://localhost:3000/app`
 - **FastAPI Documentation**: `http://localhost:8000/docs`
 - **API Health Check**: `http://localhost:8000/healthz`
 
-To stop containers:
+##### Direct Host Port Access for Local Debugging:
+If you need direct workstation access to PostgreSQL (`5432`) or Redis (`6379`) using tools like `psql`, `pgAdmin`, `DBeaver`, or `redis-cli`, launch with the development override file (which binds only to `127.0.0.1` loopback):
+```bash
+docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d
+```
+
+##### Stopping Containers:
 ```bash
 docker compose -f infra/docker-compose.yml down
 ```
 
-#### 2. Production Deployment (Strict Secret Enforcement)
-In production environments, never rely on default credentials. The production compose configuration (`infra/docker-compose.prod.yml`) enforces that all production secrets (`POSTGRES_PASSWORD`, `DATABASE_URL`, `SESSION_SIGNING_KEY`, `FIELD_ENCRYPTION_KEY`, `GITHUB_APP_PRIVATE_KEY`, `GITHUB_WEBHOOK_SECRET`, `GEMINI_API_KEY`) are explicitly defined:
+---
 
+#### 2. Production Deployment & Security Guidelines
+
+In production environments, never rely on default credentials or unencrypted channels. The production compose configuration (`infra/docker-compose.prod.yml`) enforces that all production secrets are explicitly defined and valid.
+
+##### Step 1: Create a Secure Production Environment File
 ```bash
-# 1. Create a secure environment configuration from the template
 cp infra/.env.example infra/.env
-# Edit infra/.env with production keys, high-entropy secrets, and paid Gemini tier
+```
 
-# 2. Launch production stack with strict validation
+Generate high-entropy random keys (minimum 32 characters) for session signing and database field encryption:
+```bash
+# Generate 32-byte hex keys:
+python -c "import secrets; print(secrets.token_hex(32))"
+# Or using OpenSSL:
+openssl rand -hex 32
+```
+
+In `infra/.env`, configure:
+- Strong unique `POSTGRES_PASSWORD` and match it in `DATABASE_URL`.
+- Generated `SESSION_SIGNING_KEY` and `FIELD_ENCRYPTION_KEY`.
+- Real `GEMINI_API_KEY` and set `GEMINI_KEY_TIER=paid` (or your allocated tier).
+- Real `GITHUB_APP_ID`, `GITHUB_APP_PRIVATE_KEY` (PEM RSA key), and `GITHUB_WEBHOOK_SECRET`.
+- Ensure `APP_ENV=production`.
+
+##### Step 2: Start the Production Stack
+```bash
+# Strict secret validation: fails immediately if any required secret is missing or empty
 docker compose --env-file infra/.env -f infra/docker-compose.yml -f infra/docker-compose.prod.yml up --build -d
 ```
-*(If any required secret is missing or empty, Docker Compose will fail immediately with `${VARIABLE:?Set VARIABLE in environment}`)*
+*(If any mandatory production secret is missing, Docker Compose will abort execution with `${VARIABLE:?Set VARIABLE in environment}`)*
+
+##### Step 3: Production Health Checks & Logs
+```bash
+# Check status and health
+docker compose -f infra/docker-compose.yml -f infra/docker-compose.prod.yml ps
+
+# Inspect logs
+docker compose -f infra/docker-compose.yml -f infra/docker-compose.prod.yml logs -f api worker
+```
+
+##### Step 4: Database Persistence & Backup Guidelines
+- **Persistence**: Database data is stored in the Docker volume `pgdata`.
+- **Database Backup**:
+  ```bash
+  docker compose -f infra/docker-compose.yml exec -T postgres pg_dump -U postgres prreview > backup_$(date +%Y%m%d_%H%M%S).sql
+  ```
+- **Database Restore**:
+  ```bash
+  cat backup.sql | docker compose -f infra/docker-compose.yml exec -T postgres psql -U postgres -d prreview
+  ```
+
+> [!CAUTION]
+> **Infrastructure Hardening**: In production, always terminate TLS via a reverse proxy (e.g. Nginx, Caddy, Cloudflare, or AWS ALB), enforce strict firewall rules (security groups) preventing external access to internal services, and store secrets using a secure secret manager (AWS Secrets Manager, GCP Secret Manager, or HashiCorp Vault).
 
 ---
 

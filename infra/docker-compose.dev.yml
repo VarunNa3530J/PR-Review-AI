@@ -1,0 +1,19 @@
+# ==============================================================================
+# Local Development Docker Compose Override for PR-Review-AI
+# ==============================================================================
+# Use this override ONLY for local debugging and development when you need direct
+# host port access to PostgreSQL (5432) and Redis (6379) from outside Docker
+# (e.g., using psql, pgAdmin, DBeaver, or redis-cli on your host workstation).
+#
+# Usage:
+#   docker compose -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d
+# ==============================================================================
+
+services:
+  postgres:
+    ports:
+      - "127.0.0.1:5432:5432"
+
+  redis:
+    ports:
+      - "127.0.0.1:6379:6379"

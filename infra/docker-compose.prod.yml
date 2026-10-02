@@ -2,10 +2,11 @@
 # Production Docker Compose Override for PR-Review-AI
 # ==============================================================================
 # Enforces that all required production secrets and configurations are strictly
-# provided via environment variables (or .env file) without unsafe fallbacks.
+# provided via environment variables (e.g. from a secure .env file or orchestrator)
+# without unsafe fallbacks.
 #
 # Usage:
-#   docker compose -f infra/docker-compose.yml -f infra/docker-compose.prod.yml up --build -d
+#   docker compose --env-file infra/.env -f infra/docker-compose.yml -f infra/docker-compose.prod.yml up --build -d
 # ==============================================================================
 
 services:
@@ -30,8 +31,10 @@ services:
       - GITHUB_APP_SLUG=${GITHUB_APP_SLUG:?Set GITHUB_APP_SLUG in environment}
       - GITHUB_APP_PRIVATE_KEY=${GITHUB_APP_PRIVATE_KEY:?Set GITHUB_APP_PRIVATE_KEY in environment}
       - GITHUB_WEBHOOK_SECRET=${GITHUB_WEBHOOK_SECRET:?Set GITHUB_WEBHOOK_SECRET in environment}
+      - GITHUB_OAUTH_CLIENT_ID=${GITHUB_OAUTH_CLIENT_ID:-}
+      - GITHUB_OAUTH_CLIENT_SECRET=${GITHUB_OAUTH_CLIENT_SECRET:-}
       - GEMINI_API_KEY=${GEMINI_API_KEY:?Set GEMINI_API_KEY in environment}
-      - GEMINI_KEY_TIER=paid
+      - GEMINI_KEY_TIER=${GEMINI_KEY_TIER:-paid}
 
   worker:
     environment:
@@ -41,7 +44,7 @@ services:
       - SESSION_SIGNING_KEY=${SESSION_SIGNING_KEY:?Set SESSION_SIGNING_KEY in environment}
       - FIELD_ENCRYPTION_KEY=${FIELD_ENCRYPTION_KEY:?Set FIELD_ENCRYPTION_KEY in environment}
       - GEMINI_API_KEY=${GEMINI_API_KEY:?Set GEMINI_API_KEY in environment}
-      - GEMINI_KEY_TIER=paid
+      - GEMINI_KEY_TIER=${GEMINI_KEY_TIER:-paid}
 
   web:
     environment:
